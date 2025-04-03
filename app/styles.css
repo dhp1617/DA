@@ -1,0 +1,49 @@
+body {
+    margin: 0;
+    background-color: black;
+    overflow: hidden;
+}
+
+#chat-container {
+    width: 300px;
+    height: 400px;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+    padding: 15px;
+    text-align: center;
+    color: white;
+    font-family: Arial, sans-serif;
+}
+
+#chat-box {
+    height: 250px;
+    overflow-y: auto;
+    border: 1px solid cyan;
+    padding: 10px;
+}
+
+input, button {
+    margin-top: 10px;
+    padding: 10px;
+    width: 90%;
+}
+
+#mic-btn {
+    background: red;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+#particles {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}

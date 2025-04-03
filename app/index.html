@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Assistant</title>
+    <style>
+        body {
+            background-color: black;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            text-align: center;
+            color: white;
+            width: 100%; /* Full width for the container */
+            max-width: 600px; /* Maximum width for the container */
+            padding: 4px; /* Added padding */
+            transition: height 0.3s ease; /* Smooth height transition */
+        }
+        .response {
+            color: white; /* Response text color */
+            display: none; /* Initially hidden */
+            opacity: 0; /* Start invisible for fade effect */
+            transition: opacity 0.5s ease; /* Fade transition */
+            white-space: pre-wrap; /* Preserve whitespace */
+            margin-top: 20px; /* Space between response and input */
+            width: 100%; /* Make response area full width */
+            max-height: 300px; /* Set a max height for the response area */
+            overflow-y: auto; /* Allow scrolling if content exceeds max height */
+            font-weight: bold; /* Bold text for response */
+            font-size: 16px; /* Adjust font size as needed */
+        }
+        .pulsing-circle {
+            width: 120px; /* Circle size */
+            height: 120px; /* Circle size */
+            border-radius: 50%;
+            background-color: white;
+            animation: pulse 0.8s infinite; /* Faster pulse rate */
+            margin: 0 auto; /* Center horizontally */
+            display: block; /* Always visible */
+            margin-bottom: 10px; /* Space between circle and response */
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+            }
+        }
+        input[type="text"] {
+            width: 300px; /* Set a specific width for the input text box */
+            padding: 5px; /* Reduced padding */
+            border: none;
+            border-radius: 5px;
+            margin-top: 10px;
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.3); /* Reduced shadow */
+            background-color: rgba(255, 255, 255, 0.1); /* Less exposure */
+            color: white; /* Input text color */
+        }
+    </style>
+</head>
+<body>
+    <div class="container" id="container">
+        <div class="pulsing-circle" id="pulsingCircle"></div>
+        <div class="response" id="responseArea"></div>
+        <input type="text" id="userInput" placeholder="Type your question..." />
+    </div>
+
+
+    
+
+
+    <script>
+        const responseArea = document.getElementById('responseArea');
+        const userInput = document.getElementById('userInput');
+        const pulsingCircle = document.getElementById('pulsingCircle');
+        const container = document.getElementById('container');
+    
+        userInput.addEventListener('keypress', async function (e) {
+            if (e.key === 'Enter') {
+                const inputText = userInput.value.trim();
+                if (inputText !== '') {
+                    // Show pulsing circle (loading animation)
+                    pulsingCircle.style.animationPlayState = 'running';
+                    responseArea.style.display = 'block';
+                    responseArea.style.opacity = 0; // Start invisible for fade effect
+                    userInput.value = ''; // Clear input
+    
+                    try {
+                        // Send request to Flask AI server
+                        const response = await fetch('http://localhost:5000/chat', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ message: inputText })
+                        });
+    
+                        const responseText = await response.text(); // ✅ Read plain text response
+                        container.style.height = 'auto'; // Allow height to adjust
+                        
+                        // Check response conditions
+                        
+                        if ( responseText.length > 500 ) {
+                            // Open a new window for long responses or bullet points
+                            const newWindow = window.open('', '_blank', 'width=600,height=400');
+                newWindow.document.write(`
+                    <html>
+                        <head>
+                            
+                            <style>
+                                body {
+                                    font-family: Arial, sans-serif;
+                                    background-color: black;
+                                    color: white;
+                                    padding: 20px;
+                                    overflow-wrap: break-word; /* Prevent horizontal scrolling */
+                                    word-wrap: break-word; /* Prevent horizontal scrolling */
+                                    word-break: break-word; /* Prevent horizontal scrolling */
+                                }
+                                pre {
+                                    font-size: 16px; /* Increase text size */
+                                    max-width: 100%; /* Ensure it does not exceed window width */
+                                    overflow: auto; /* Allow scrolling if content exceeds */
+                                    white-space: pre-wrap; /* Preserve whitespace and wrap text */
+                                }
+                            </style>
+                        </head>
+                        <body>
+                            <h1>AI Response</h1>
+                            <pre>${responseText}</pre>
+                        </body>
+                    </html>
+                `);
+                newWindow.document.close(); // Close the document to render it
+//  // Close the document to render it
+                        } else {
+                            // Fade out the current response
+                            responseArea.style.opacity = 0;
+                            setTimeout(() => {
+                                
+                                responseArea.textContent = ''; // Clear previous response
+                                let cleanedResponse = responseText.replace(/[-*]+/g, '').trim();
+                                const words = responseText.split(' '); // Split response into words
+                                let index = 0;
+    
+                                // Function to print response word by word (typing effect)
+                                const typingEffect = () => {
+                                    if (index < words.length) {
+                                        responseArea.textContent += words[index] + ' ';
+                                        index++;
+                                        setTimeout(typingEffect, 50); // Adjust delay for typing speed
+                                    } else {
+                                        responseArea.style.opacity = 1; // Fade in response
+                                        pulsingCircle.style.animationPlayState = 'paused'; // Stop pulsing animation
+                                    }
+                                };
+    
+                                // Start typing effect after fading out
+                                setTimeout(() => {
+                                    responseArea.style.opacity = 1; // Fade in new response
+                                    typingEffect();
+                                }, 500); // Wait for fade out to complete
+                            }, 500); // Duration for fade out
+                        }
+    
+                    } catch (error) {
+                        console.error('Error fetching AI response:', error);
+                        responseArea.textContent = "Error: Unable to connect to AI server.";
+                        pulsingCircle.style.animationPlayState = 'paused'; // Stop pulsing animation
+                        responseArea.style.opacity = 1;
+                    }
+                }
+            }
+        });
+    </script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</body>
+</html>

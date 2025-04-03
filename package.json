@@ -1,0 +1,11 @@
+{
+  "name": "da",
+  "version": "1.0.0",
+  "main": "app/main.js",
+  "scripts": {
+    "start": "electron ."
+  },
+  "devDependencies": {
+    "electron": "^latest"
+  }
+}
